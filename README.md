@@ -81,6 +81,14 @@ This project demonstrates an end-to-end automated DevOps pipeline that:
 
 ### Installation
 
+**Quick Setup**: Use the deployment helper script:
+```bash
+./deploy.sh
+# Select option 10 for automated full setup
+```
+
+**Manual Setup**:
+
 1. **Clone the repository**
 ```bash
 git clone https://github.com/ntphiep/aaahkt.git
@@ -143,7 +151,20 @@ npm run dev
 
 ## 📦 Deployment
 
+### Quick Start Deployment
+
+Use the deployment helper script for easy setup:
+
+```bash
+./deploy.sh
+# Select option 10 for full setup
+```
+
 ### Deploying to Vercel
+
+**Detailed Guide**: See [VERCEL_DEPLOYMENT.md](VERCEL_DEPLOYMENT.md) for complete instructions.
+
+**Quick Deploy**:
 
 1. **Install Vercel CLI**
 ```bash
@@ -169,6 +190,13 @@ vercel env add NEXT_PUBLIC_API_URL production
 # - AWS ECS/Fargate
 # - Any cloud provider supporting Python/FastAPI
 ```
+
+### Deployment Resources
+
+- 📘 [Complete Vercel Deployment Guide](VERCEL_DEPLOYMENT.md)
+- 🚀 [Deployment Script](deploy.sh)
+- ✅ [Project Completion Checklist](CHECKLIST.md)
+- 📋 [Quick Reference Guide](QUICKREF.md)
 
 ### Configuration
 
