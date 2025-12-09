@@ -3,7 +3,8 @@ Configuration management for the Automated DevOps Pipeline
 """
 
 from pydantic_settings import BaseSettings
-from typing import Optional, List
+from pydantic import field_validator
+from typing import Optional, List, Union
 import os
 
 class Settings(BaseSettings):
@@ -16,6 +17,8 @@ class Settings(BaseSettings):
     log_level: str = "INFO"
     
     # Security settings
+    # WARNING: Change the secret_key in production! Use environment variables.
+    # Generate a secure key with: python -c "import secrets; print(secrets.token_urlsafe(32))"
     secret_key: str = "your-super-secret-key-change-this-in-production"
     algorithm: str = "HS256"
     access_token_expire_minutes: int = 30
@@ -58,9 +61,19 @@ class Settings(BaseSettings):
     github_token: Optional[str] = None
     
     # CORS settings
-    allowed_origins: List[str] = ["*"]
+    allowed_origins: Union[List[str], str] = ["*"]
     allowed_methods: List[str] = ["*"]
     allowed_headers: List[str] = ["*"]
+    
+    @field_validator('allowed_origins', mode='before')
+    @classmethod
+    def parse_cors_origins(cls, v):
+        """Parse CORS origins from comma-separated string or list"""
+        if isinstance(v, str):
+            if v == "*":
+                return ["*"]
+            return [origin.strip() for origin in v.split(',')]
+        return v
     
     class Config:
         env_file = ".env"
