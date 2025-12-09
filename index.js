@@ -13,6 +13,7 @@
 
 import fs from 'fs';
 import path from 'path';
+import { fileURLToPath } from 'url';
 import { program } from 'commander';
 import chalk from 'chalk';
 
@@ -172,9 +173,20 @@ class CodeAnalyzer {
       this.suggestions.push('Multiple console.log statements found - consider using a proper logging library');
     }
 
-    // Check for magic numbers
-    const magicNumberPattern = /\s((?!0|1|2|10|100|1000)\d{2,})\s/g;
-    if (magicNumberPattern.test(content)) {
+    // Check for magic numbers (excluding common values like 0, 1, 2, 10, 100, 1000)
+    const lines = content.split('\n');
+    let hasMagicNumbers = false;
+    lines.forEach(line => {
+      // Match numbers that are not 0, 1, 2, 10, 100, or 1000
+      const matches = line.match(/\b\d{2,}\b/g);
+      if (matches) {
+        const filtered = matches.filter(n => !['10', '100', '1000'].includes(n));
+        if (filtered.length > 0) {
+          hasMagicNumbers = true;
+        }
+      }
+    });
+    if (hasMagicNumbers) {
       this.suggestions.push('Magic numbers detected - consider using named constants');
     }
 
@@ -330,7 +342,8 @@ program
   });
 
 // If run directly (not imported)
-if (import.meta.url === `file://${process.argv[1]}`) {
+const currentFile = fileURLToPath(import.meta.url);
+if (process.argv[1] === currentFile) {
   program.parse();
 }
 
