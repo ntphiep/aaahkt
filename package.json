@@ -1,0 +1,25 @@
+{
+  "name": "ai-code-review-assistant",
+  "version": "1.0.0",
+  "description": "AI-powered code review assistant for hackathon - analyzes code quality and provides intelligent suggestions",
+  "main": "index.js",
+  "type": "module",
+  "scripts": {
+    "start": "node index.js",
+    "review": "node index.js",
+    "test": "node test.js"
+  },
+  "keywords": [
+    "ai",
+    "code-review",
+    "static-analysis",
+    "hackathon",
+    "assemblehack25"
+  ],
+  "author": "AssembleHack25 Participant",
+  "license": "MIT",
+  "dependencies": {
+    "chalk": "^5.3.0",
+    "commander": "^11.1.0"
+  }
+}
