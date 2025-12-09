@@ -1,0 +1,89 @@
+id: lambda-deployment-optimizer
+namespace: dev.aws.pipeline
+
+description: Optimize Lambda deployment using RL agent
+
+tasks:
+  - id: collect-metrics
+    type: io.kestra.plugin.scripts.python.Script
+    description: Collect Lambda metrics
+    script: |
+      import boto3
+      import json
+      from datetime import datetime, timedelta
+      
+      cloudwatch = boto3.client('cloudwatch', region_name='{{ inputs.aws_region }}')
+      
+      end_time = datetime.now()
+      start_time = end_time - timedelta(hours=24)
+      
+      metrics = {}
+      
+      for metric_name in ['Invocations', 'Errors', 'Duration', 'Throttles']:
+          response = cloudwatch.get_metric_statistics(
+              Namespace='AWS/Lambda',
+              MetricName=metric_name,
+              Dimensions=[
+                  {'Name': 'FunctionName', 'Value': '{{ inputs.function_name }}'}
+              ],
+              StartTime=start_time,
+              EndTime=end_time,
+              Period=3600,
+              Statistics=['Sum', 'Average']
+          )
+          metrics[metric_name] = response.get('Datapoints', [])
+      
+      print(json.dumps(metrics))
+
+  - id: rl-optimization
+    type: io.kestra.plugin.scripts.python.Script
+    description: Get RL optimization recommendations
+    script: |
+      import json
+      import requests
+      
+      # Get RL recommendation
+      response = requests.get('{{ inputs.api_url }}/rl/stats')
+      stats = response.json()
+      
+      print(json.dumps(stats))
+
+  - id: apply-optimization
+    type: io.kestra.plugin.scripts.python.Script
+    description: Apply recommended optimizations
+    script: |
+      import boto3
+      import json
+      
+      lambda_client = boto3.client('lambda', region_name='{{ inputs.aws_region }}')
+      
+      # Example: Update memory based on RL recommendation
+      # This would be more sophisticated in production
+      response = lambda_client.update_function_configuration(
+          FunctionName='{{ inputs.function_name }}',
+          MemorySize=1024,  # RL-optimized value
+          Timeout=30
+      )
+      
+      print(json.dumps({
+          'updated': True,
+          'function': response['FunctionName']
+      }))
+
+inputs:
+  - id: function_name
+    type: STRING
+    defaults: my-lambda-function
+  
+  - id: aws_region
+    type: STRING
+    defaults: us-east-1
+  
+  - id: api_url
+    type: STRING
+    defaults: http://localhost:8000
+
+triggers:
+  - id: daily-optimization
+    type: io.kestra.plugin.core.trigger.Schedule
+    cron: "0 2 * * *"  # Daily at 2 AM

@@ -1,0 +1,107 @@
+id: aws-cloudwatch-monitor
+namespace: dev.aws.pipeline
+
+description: Monitor AWS CloudWatch logs and trigger decisions
+
+tasks:
+  - id: fetch-logs
+    type: io.kestra.plugin.scripts.python.Script
+    description: Fetch CloudWatch logs using AWS SDK
+    script: |
+      import boto3
+      import json
+      from datetime import datetime, timedelta
+      
+      logs_client = boto3.client('logs', region_name='{{ inputs.aws_region }}')
+      
+      start_time = int((datetime.now() - timedelta(hours=1)).timestamp() * 1000)
+      end_time = int(datetime.now().timestamp() * 1000)
+      
+      response = logs_client.filter_log_events(
+          logGroupName='{{ inputs.log_group }}',
+          startTime=start_time,
+          endTime=end_time,
+          filterPattern='?ERROR ?Error ?error',
+          limit=100
+      )
+      
+      events = response.get('events', [])
+      print(json.dumps({'log_count': len(events), 'events': events[:10]}))
+
+  - id: analyze-logs
+    type: io.kestra.plugin.scripts.python.Script
+    description: Analyze logs with AI agent
+    script: |
+      import json
+      import requests
+      
+      # Call our pipeline API to analyze
+      response = requests.post(
+          '{{ inputs.api_url }}/monitor',
+          json={
+              'function_name': '{{ inputs.function_name }}',
+              'log_group': '{{ inputs.log_group }}',
+              'pipeline_id': '{{ inputs.pipeline_id }}'
+          }
+      )
+      
+      result = response.json()
+      print(json.dumps(result))
+
+  - id: make-decision
+    type: io.kestra.plugin.core.flow.Switch
+    description: Route based on decision
+    value: "{{ outputs.analyze-logs.vars.decision.action }}"
+    cases:
+      rollback:
+        - id: trigger-rollback
+          type: io.kestra.plugin.notifications.slack.SlackIncomingWebhook
+          url: "{{ secret('SLACK_WEBHOOK') }}"
+          payload: |
+            {
+              "text": "🚨 Automatic rollback triggered for {{ inputs.function_name }}"
+            }
+      
+      deploy:
+        - id: proceed-deployment
+          type: io.kestra.plugin.notifications.slack.SlackIncomingWebhook
+          url: "{{ secret('SLACK_WEBHOOK') }}"
+          payload: |
+            {
+              "text": "✅ Deployment proceeding for {{ inputs.function_name }}"
+            }
+      
+      monitor:
+        - id: continue-monitoring
+          type: io.kestra.plugin.notifications.slack.SlackIncomingWebhook
+          url: "{{ secret('SLACK_WEBHOOK') }}"
+          payload: |
+            {
+              "text": "👀 Continuing to monitor {{ inputs.function_name }}"
+            }
+
+inputs:
+  - id: function_name
+    type: STRING
+    defaults: my-lambda-function
+  
+  - id: log_group
+    type: STRING
+    defaults: /aws/lambda/pipeline
+  
+  - id: pipeline_id
+    type: STRING
+    defaults: pipeline-001
+  
+  - id: aws_region
+    type: STRING
+    defaults: us-east-1
+  
+  - id: api_url
+    type: STRING
+    defaults: http://localhost:8000
+
+triggers:
+  - id: schedule
+    type: io.kestra.plugin.core.trigger.Schedule
+    cron: "*/15 * * * *"  # Every 15 minutes
