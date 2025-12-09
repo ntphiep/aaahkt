@@ -36,8 +36,9 @@ def test_summarize_cloudwatch_logs_critical():
     agent = KestraAIAgent()
     
     logs = [
-        {'message': 'CRITICAL: System failure'},
-        {'message': 'FATAL: Cannot recover'},
+        {'message': 'CRITICAL ERROR: System failure'},
+        {'message': 'FATAL ERROR: Cannot recover'},
+        {'message': 'ERROR: Critical timeout occurred'},
     ]
     
     result = agent.summarize_cloudwatch_logs(logs)

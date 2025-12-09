@@ -1,0 +1,22 @@
+{
+  "low_error_low_cost": {
+    "deploy": 0.9148650067373876,
+    "wait": 0.1,
+    "optimize": 0.5
+  },
+  "low_error_high_cost": {
+    "deploy": 0.7,
+    "wait": 0.3,
+    "optimize": 0.8
+  },
+  "high_error_low_cost": {
+    "deploy": 0.2,
+    "wait": 0.4,
+    "optimize": 0.6
+  },
+  "high_error_high_cost": {
+    "deploy": 0.1,
+    "wait": 0.5,
+    "optimize": 0.7
+  }
+}
