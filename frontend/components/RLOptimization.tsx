@@ -31,7 +31,7 @@ interface RLStats {
 }
 
 export default function RLOptimization() {
-  const { data: optimization, error, isLoading, mutate } = useAPI('/api/oumi/optimization')
+  const { data: optimization, error, isLoading, refetch } = useAPI('/api/oumi/optimization')
   const [isOptimizing, setIsOptimizing] = useState(false)
 
   const handleOptimize = async () => {
@@ -44,7 +44,7 @@ export default function RLOptimization() {
       })
       
       // Refresh data
-      await mutate()
+      refetch()
     } catch (error) {
       console.error('Optimization failed:', error)
     } finally {
